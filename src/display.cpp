@@ -1,9 +1,11 @@
 
-#include <avr/pgmspace.h>
+// #include <avr/pgmspace.h>
 #include "display.h"
 
 
 #define DP_REGISTER         ((max7219_reg_t)3u)
+#define CHAR_DEFIS          (10)
+#define CHAR_SPACE          (11)
 
 
 // const PROGMEM uint8_t charSet[] = {
@@ -19,7 +21,8 @@ const uint8_t charSet[] = {
     0b00010011, //dig "7"
     0b11111011, //dig "8"
     0b11110011, //dig "9"
-    0b00100000  // "-"
+    0b00100000, // "-"
+    0b00000000  // " "
 };
 
 const uint8_t digitMask[DISPLAY_DIGITS] = {
@@ -28,17 +31,6 @@ const uint8_t digitMask[DISPLAY_DIGITS] = {
     (1u << 1),
     (1u << 6)
 };
-
-// const uint8_t segMask[8] = {
-//     (1u << 0), //B
-//     (1u << 1), //C
-//     (1u << 2), //dp
-//     (1u << 3), //E
-//     (1u << 4), //A
-//     (1u << 5), //G
-//     (1u << 6), //F
-//     (1u << 7)  //D
-// };
 
 
 static uint8_t inited = 0u;
@@ -69,8 +61,10 @@ static uint8_t convert_char(char *c)
 {
     if (*c >= '0' || *c <= '9')
         return charSet[(*c)-'0'];
+    else if (' ' == *c)
+        return charSet[CHAR_SPACE];
     else
-        return charSet[10];
+        return charSet[CHAR_DEFIS];
 }
 
 
@@ -139,16 +133,18 @@ void display_set_intensity(uint8_t value)
 }
 
 
-void display_set(char *str)
+void display_set(char *str, uint8_t pos, uint8_t flush)
 {
-    char *ptr;
-    for(uint8_t cnt = 0u; cnt < DISPLAY_DIGITS; cnt++) {
-        ptr = str+cnt;
-        if (*ptr != NULL) {
-            dg[cnt] = convert_char(ptr);
+    //char *ptr;
+    for(; pos < DISPLAY_DIGITS; pos++) {
+        //ptr = str;
+        if (*str != 0) {
+            dg[pos] = convert_char(str);
         }
+        str++;
     }
-    update_display();
+    if (flush)
+        update_display();
 }
 
 
@@ -162,3 +158,40 @@ void display_point(uint8_t num, bool state)
     }
     max7219_send(DP_REGISTER, dg_points);
 }
+
+
+void display_update()
+{
+    update_display();
+}
+
+void display_dbg(uint8_t num, uint8_t pos)
+{
+    if (num > 9)
+        return;
+    dg[pos] = charSet[num];
+    update_display();
+}
+
+
+void display_time(RtcDateTime *time)
+{
+    uint8_t num = time->Minute();
+    dg[3] = charSet[num%10];
+    if (num/10 < 9)
+        dg[2] = charSet[num/10];
+    else
+        dg[2] = charSet[CHAR_DEFIS];
+    num = time->Hour();
+    dg[1] = charSet[num%10];
+    if (num/10 < 9) {
+        if (0 == num/10)
+            dg[0] = charSet[CHAR_SPACE];
+        else
+            dg[0] = charSet[num/10];
+    } else {
+        dg[0] = charSet[CHAR_DEFIS];
+    }
+    update_display();
+}
+
