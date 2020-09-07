@@ -6,8 +6,9 @@
 #define __BSP_H
 
 #include <Arduino.h>
-// #include "display.h"
-// #include "rtc.h"
+#include "display.h"
+#include "rtc.h"
+#include "light_sensor.h"
 
 typedef enum {
     BUTTON_NONE = 0,
