@@ -148,6 +148,27 @@ void display_set(char *str, uint8_t pos, uint8_t flush)
 }
 
 
+void display_set(uint16_t num, uint8_t pnum, uint8_t flush)
+{
+    if (num < 9999) {
+        dg[0] = charSet[num/1000];
+        num %= 1000;
+        dg[1] = charSet[num/100];
+        num %= 100;
+        dg[2] = charSet[num/10];
+        num %= 10;
+        dg[3] = charSet[num];
+    } else {
+        dg[0] = charSet[10];
+        dg[1] = charSet[10];
+        dg[2] = charSet[10];
+        dg[3] = charSet[10];
+    }
+    if (flush)
+        update_display();
+}
+
+
 void display_point(uint8_t num, bool state)
 {
     if (num < DISPLAY_DIGITS) {
