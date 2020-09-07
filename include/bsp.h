@@ -8,11 +8,19 @@
 #include <Arduino.h>
 #include "display.h"
 #include "rtc.h"
-#include "light_sensor.h"
+// #include "light_sensor.h"
+
+#define LSENSOR_PIN             (A3)  //OR PC3/ADC3
+#define BUTTON_MODE_PIN         (3)   //OR PD3
+#define BUTTON_PLUS_PIN         (5)   //OR PD5
+#define BUTTON_MINUS_PIN        (6)   //OR PD6
+
+#define LOW_LUX_SET         (7u)
+#define HIGH_LUX_SET        (250u)
 
 typedef enum {
     BUTTON_NONE = 0,
-    BUTTON_SET,
+    BUTTON_MODE,
     BUTTON_PLUS,
     BUTTON_MINUS
 } button_t;
@@ -20,7 +28,8 @@ typedef enum {
 
 void bsp_init();
 uint8_t bsp_read_button(button_t btn);
-uint8_t bsp_read_light();
+uint16_t bsp_lsensor_read();
+void bsp_set_intens();
 void bsp_boost_conrol(bool state);
 void bsp_charge_control(bool state);
 bool bsp_read_charge();
