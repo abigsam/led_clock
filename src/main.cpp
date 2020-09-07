@@ -86,11 +86,11 @@ int main() {
         if (bmode_cnt > 4) {
             bmode_cnt = 0u;
             if (DISPLAY_TIME == curr_mode) {
-                // display_set((char *)"T");
+                display_set((char *)"L   ", 0);
                 display_set_intensity(MAX_INTENSITY);
                 curr_mode = DISPLAY_LUX;
             } else {
-                // display_set((char *)"L");
+                display_set((char *)"T   ", 0);
                 alarm_goes = true;
                 curr_mode = DISPLAY_TIME;
             }

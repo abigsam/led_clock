@@ -6,6 +6,8 @@
 #define DP_REGISTER         ((max7219_reg_t)3u)
 #define CHAR_DEFIS          (10)
 #define CHAR_SPACE          (11)
+#define CHAR_T              (12)
+#define CHAR_L              (13)
 
 
 // const PROGMEM uint8_t charSet[] = {
@@ -22,7 +24,9 @@ const uint8_t charSet[] = {
     0b11111011, //dig "8"
     0b11110011, //dig "9"
     0b00100000, // "-"
-    0b00000000  // " "
+    0b00000000, // " "
+    0b11101000, // "t"
+    0b11001000  // "L"
 };
 
 const uint8_t digitMask[DISPLAY_DIGITS] = {
@@ -59,8 +63,12 @@ static void update_display()
 
 static uint8_t convert_char(char *c)
 {
-    if (*c >= '0' || *c <= '9')
+    if (*c >= '0' && *c <= '9')
         return charSet[(*c)-'0'];
+    else if ('L' == *c)
+        return charSet[CHAR_L];
+    else if ('T' == *c)
+        return charSet[CHAR_T];
     else if (' ' == *c)
         return charSet[CHAR_SPACE];
     else
@@ -135,9 +143,7 @@ void display_set_intensity(uint8_t value)
 
 void display_set(char *str, uint8_t pos, uint8_t flush)
 {
-    //char *ptr;
     for(; pos < DISPLAY_DIGITS; pos++) {
-        //ptr = str;
         if (*str != 0) {
             dg[pos] = convert_char(str);
         }
