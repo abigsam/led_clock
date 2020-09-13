@@ -8,6 +8,7 @@
 #define CHAR_SPACE          (11)
 #define CHAR_T              (12)
 #define CHAR_L              (13)
+#define CHAR_E              (14)
 
 
 // const PROGMEM uint8_t charSet[] = {
@@ -26,7 +27,8 @@ const uint8_t charSet[] = {
     0b00100000, // "-"
     0b00000000, // " "
     0b11101000, // "t"
-    0b11001000  // "L"
+    0b11001000, // "L"
+    0b11111000  // "E"
 };
 
 const uint8_t digitMask[DISPLAY_DIGITS] = {
@@ -39,6 +41,7 @@ const uint8_t digitMask[DISPLAY_DIGITS] = {
 
 static uint8_t inited = 0u;
 static uint8_t dg[DISPLAY_DIGITS] = {0u};
+static uint8_t dg_copy[DISPLAY_DIGITS] = {0u};
 static uint8_t dg_points = 0u;
 
 static void update_display();
@@ -69,6 +72,8 @@ static uint8_t convert_char(char *c)
         return charSet[CHAR_L];
     else if ('T' == *c)
         return charSet[CHAR_T];
+    else if ('E' == *c)
+        return charSet[CHAR_E];
     else if (' ' == *c)
         return charSet[CHAR_SPACE];
     else
@@ -103,6 +108,7 @@ void display_init()
     display_set_intensity(DEFAULT_INTENSITY);
     for(uint8_t cnt = 0; cnt < DISPLAY_DIGITS; cnt++) {
         dg[cnt] = 0u;
+        dg_copy[cnt] = 0u;
     }
     dg_points = 0u;
     inited = 1;
@@ -201,23 +207,59 @@ void display_dbg(uint8_t num, uint8_t pos)
 }
 
 
-void display_time(RtcDateTime *time)
+/**
+ * @brief 
+ * 
+ * @param time 
+ */
+void display_time(RtcDateTime *time, uint8_t enable_mask)
 {
+    uint8_t cnt = 0u;
+
     uint8_t num = time->Minute();
-    dg[3] = charSet[num%10];
+    dg_copy[3] = charSet[num%10];
     if (num/10 < 9)
-        dg[2] = charSet[num/10];
+        dg_copy[2] = charSet[num/10];
     else
-        dg[2] = charSet[CHAR_DEFIS];
+        dg_copy[2] = charSet[CHAR_DEFIS];
     num = time->Hour();
-    dg[1] = charSet[num%10];
+    dg_copy[1] = charSet[num%10];
     if (num/10 < 9) {
         if (0 == num/10)
-            dg[0] = charSet[CHAR_SPACE];
+            dg_copy[0] = charSet[CHAR_SPACE];
         else
-            dg[0] = charSet[num/10];
+            dg_copy[0] = charSet[num/10];
     } else {
-        dg[0] = charSet[CHAR_DEFIS];
+        dg_copy[0] = charSet[CHAR_DEFIS];
+    }
+
+    for(cnt = 0u; cnt < DISPLAY_DIGITS; cnt++) {
+        if (!(enable_mask & (1u << cnt))) {
+            dg[cnt] = charSet[CHAR_SPACE];
+        } else {
+            dg[cnt] = dg_copy[cnt];
+        }
+    }
+
+    update_display();
+}
+
+
+/**
+ * @brief 
+ * 
+ * @param enable_mask 
+ */
+void display_digit_control(uint8_t enable_mask)
+{
+    uint8_t cnt = 0u;
+    for(cnt = 0u; cnt < DISPLAY_DIGITS; cnt++) {
+        if (!(enable_mask & (1u << cnt))) {
+            //dg_copy[cnt] = dg[cnt];
+            dg[cnt] = charSet[CHAR_SPACE];
+        } else {
+            dg[cnt] = dg_copy[cnt];
+        }
     }
     update_display();
 }

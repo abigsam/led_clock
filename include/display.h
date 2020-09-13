@@ -25,6 +25,7 @@ void display_point(uint8_t num, bool state);
 void display_update();
 void display_dbg(uint8_t num, uint8_t pos = 0);
 
-void display_time(RtcDateTime *time);
+void display_time(RtcDateTime *time, uint8_t enable_mask = 0xf);
+void display_digit_control(uint8_t enable_mask);
 
 #endif //__DISPLAY_H

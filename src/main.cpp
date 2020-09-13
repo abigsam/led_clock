@@ -5,12 +5,9 @@
 #define RTC_INT_PIN       (2)
 // #define BUTTON3_PIN       (3)
 
-RtcDateTime time;
 volatile bool alarm_goes = false;
 uint16_t light = 0u;
 uint8_t bmode_cnt = 0u;
-
-void update_time(RtcDateTime *t);
 
 
 void Alarm2_ISR()
@@ -25,7 +22,9 @@ void Alarm2_ISR()
 
 typedef enum {
     DISPLAY_TIME = 0,
-    DISPLAY_LUX
+    DISPLAY_EDIT_TIME,
+    DISPLAY_LUX,
+    DISPLAY_MODE_NUM
 } mode_t;
 
 mode_t curr_mode = DISPLAY_TIME;
@@ -53,7 +52,7 @@ int main() {
     //Init RTC
     alarm_goes = false;
     rtc_init();
-    update_time(&time);
+    bsp_update_time();
     rtc_alarm_every_minute();
     attachInterrupt(digitalPinToInterrupt(RTC_INT_PIN), Alarm2_ISR, FALLING);
     // attachInterrupt(digitalPinToInterrupt(BUTTON3_PIN), Button3_ISR, FALLING);
@@ -67,16 +66,20 @@ int main() {
             //Check if alarm goes
             if (alarm_goes) {
                 rtc_alarm2_check();
-                update_time(&time);
+                bsp_update_time();
                 alarm_goes = false;
             }
+        }
+        if (DISPLAY_EDIT_TIME == curr_mode) {
+            bsp_edit_time();
+            curr_mode = DISPLAY_TIME;
         }
         if (DISPLAY_LUX == curr_mode) {
             light = bsp_lsensor_read();
             display_set(light);
         }
 
-        //Check buttons
+        //Check button Mode
         if (bsp_read_button(BUTTON_MODE))
             bmode_cnt++;
         else
@@ -85,17 +88,21 @@ int main() {
         //Switch display mode if need
         if (bmode_cnt > 4) {
             bmode_cnt = 0u;
-            if (DISPLAY_TIME == curr_mode) {
+            curr_mode = (DISPLAY_MODE_NUM == curr_mode) ? DISPLAY_TIME : (mode_t)(curr_mode+1);
+
+            if (DISPLAY_EDIT_TIME == curr_mode) {
+                display_set((char *)"E   ", 0);
+                display_set_intensity(MAX_INTENSITY);
+            }
+            if (DISPLAY_LUX == curr_mode) {
                 display_set((char *)"L   ", 0);
                 display_set_intensity(MAX_INTENSITY);
-                curr_mode = DISPLAY_LUX;
-            } else {
+            }
+            if (DISPLAY_TIME == curr_mode) {
                 display_set((char *)"T   ", 0);
                 alarm_goes = true;
-                curr_mode = DISPLAY_TIME;
             }
         }
-
 
         //Blink decimal point
         delay(500);
@@ -107,8 +114,3 @@ int main() {
 
 
 
-void update_time(RtcDateTime *t)
-{
-  rtc_get_time(t);
-  display_time(t);
-}
