@@ -9,6 +9,7 @@
 #define CHAR_T              (12)
 #define CHAR_L              (13)
 #define CHAR_E              (14)
+#define CHAR_DEGREE         (15)
 
 
 // const PROGMEM uint8_t charSet[] = {
@@ -28,7 +29,8 @@ const uint8_t charSet[] = {
     0b00000000, // " "
     0b11101000, // "t"
     0b11001000, // "L"
-    0b11111000  // "E"
+    0b11111000, // "E"
+    0b01110001  // "*" (degree)
 };
 
 const uint8_t digitMask[DISPLAY_DIGITS] = {
@@ -74,6 +76,8 @@ static uint8_t convert_char(char *c)
         return charSet[CHAR_T];
     else if ('E' == *c)
         return charSet[CHAR_E];
+    else if ('*' == *c)
+        return charSet[CHAR_DEGREE];
     else if (' ' == *c)
         return charSet[CHAR_SPACE];
     else
@@ -160,22 +164,39 @@ void display_set(char *str, uint8_t pos, uint8_t flush)
 }
 
 
-void display_set(uint16_t num, uint8_t pnum, uint8_t flush)
+void display_set(uint16_t num, uint8_t pos, uint8_t flush)
 {
-    if (num < 9999) {
-        dg[0] = charSet[num/1000];
-        num %= 1000;
-        dg[1] = charSet[num/100];
-        num %= 100;
-        dg[2] = charSet[num/10];
-        num %= 10;
-        dg[3] = charSet[num];
+    uint8_t temp[DISPLAY_DIGITS] = {0u};
+
+    //Convert
+    if (num < 9999u) {
+        temp[0] = (num/1000u) ? charSet[num/1000u] : charSet[CHAR_SPACE];
+        num %= 1000u;
+        temp[1] = (num/100u || num/1000u) ? charSet[num/100u] : charSet[CHAR_SPACE];
+        num %= 100u;
+        temp[2] = (num/10u || num/100u || num/1000u) ? charSet[num/10u] : charSet[CHAR_SPACE];
+        num %= 10u;
+        temp[3] = charSet[num];
     } else {
-        dg[0] = charSet[10];
-        dg[1] = charSet[10];
-        dg[2] = charSet[10];
-        dg[3] = charSet[10];
+        temp[0] = charSet[CHAR_SPACE];
+        temp[1] = charSet[CHAR_SPACE];
+        temp[2] = charSet[CHAR_SPACE];
+        temp[3] = charSet[CHAR_DEFIS];
     }
+
+    //Check position
+    if (pos >= DISPLAY_DIGITS)
+        return;
+
+    //Copy
+    for(uint8_t ncnt = DISPLAY_DIGITS; ncnt > 0u; ncnt--) {
+        dg[pos] = temp[ncnt-1];
+        if (!pos)
+            break;
+        pos--;
+    }
+
+    //Update
     if (flush)
         update_display();
 }

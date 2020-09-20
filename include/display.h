@@ -20,7 +20,7 @@ void display_shutdown(uint8_t en);
 void display_clear();
 void display_set_intensity(uint8_t value);
 void display_set(char *str, uint8_t pos = 0u, uint8_t flush = 1u);
-void display_set(uint16_t num, uint8_t pnum = 0u, uint8_t flush = 1u);
+void display_set(uint16_t num, uint8_t pos = 3u, uint8_t flush = 1u);
 void display_point(uint8_t num, bool state);
 void display_update();
 void display_dbg(uint8_t num, uint8_t pos = 0);
